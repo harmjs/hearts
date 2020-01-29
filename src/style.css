@@ -1,0 +1,19 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.card {
+    position: absolute;
+}
+
+.card__sprite {
+    object-fit: none;
+    width: 79px;
+    height: 123px;
+    border-radius: 7px;
+}
+
+.card__sprite--hidden {
+    object-position: -158px -492px;
+}
