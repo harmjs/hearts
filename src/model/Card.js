@@ -17,6 +17,7 @@ Rank.QUEEN = new Rank(10, "Queen");
 Rank.KING = new Rank(11, "King");
 Rank.ACE = new Rank(12, "Ace");
 
+
 const Suit = function(value, name) {
   this.value = value;
   this.name = name;

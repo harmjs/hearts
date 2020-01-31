@@ -1,19 +1,40 @@
+html {
+    width: 100%;
+    height: 100%;
+}
+
 body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+}
+
+.playarea {
+    background-color: green;
+    margin: auto;
+}
+
+.cards {
+    position: relative;
 }
 
 .card {
     position: absolute;
 }
 
-.card__sprite {
+.card__image {
     object-fit: none;
     width: 79px;
     height: 123px;
     border-radius: 7px;
 }
 
-.card__sprite--hidden {
+.card__image--back {
     object-position: -158px -492px;
 }
