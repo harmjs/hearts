@@ -1,12 +1,13 @@
 const Game = function() {
-  this.state = null;
-  this.scoreBoard = null;
+  
 }
+
+// Use PushDown Automata for State
 
 Game.prototype = {
   constructor: Game,
-  init: function() {
-
+  init: function(update) {
+    this.update = update;
   }
 }
 
@@ -37,3 +38,6 @@ Round.Type.LIST = [
 const Trick = function(start) {
   this.state = null;
 }
+
+
+export default Game;

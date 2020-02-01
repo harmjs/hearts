@@ -47,8 +47,7 @@ const CardImageFront = ({ card }) => {
   return (
     <img
       className="card__image"
-      style={{ 
-        objectPosition }}
+      style={{ objectPosition }}
       src={cards_spritesheet}
     />
   )
@@ -61,23 +60,70 @@ const CardImageBack = () => (
   />
 );
 
-export const Deck = ({ size, cards }) => {
-  const length = cards.length;
+const HAND_CARD_OFFSET = 15;
+const BORDER_OFFSET = 50;
 
-  const OFFSETS = 7;
+export const PlayerHand = ({ size, player }) => {
+  if(!player.hand) return null;
+
+  const cards = player.hand;
+
+  const handWidth = 
+    HAND_CARD_OFFSET * (cards.length - 1) + CARD_WIDTH;
+  const transformCss = "rotate(" + player.value * 90 + "deg)";
+
+  return (
+    <div 
+      style={{
+        position: "absolute",
+        transform: transformCss
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          top: numberToCssPx(size/2 - CARD_HEIGHT - BORDER_OFFSET),
+          left: - handWidth/2
+        }}
+      >
+        {
+          cards.map((card, index) => {
+            return (
+              <div
+                className="card"
+                key={index}
+                style = {{
+                  zIndex: index,
+                  left: numberToCssPx(HAND_CARD_OFFSET * index)
+                }}
+              >
+                <CardImage card={card} />
+              </div>
+            )})
+          }
+      </div>
+    </div>
+  )
+}
+
+export const Deck = ({ size, cards }) => {
+  if(!cards) return null;
+
+  const LENGTH = 52;
+  const OFFSETS = 1;
   const OFFSET_PX = 2;
 
   return (
     <div
       className="cards"
       style={{
-        left: numberToCssPx(size/2 - CARD_WIDTH/2) ,
-        top: numberToCssPx(size/2 - CARD_HEIGHT/2)
+        left: numberToCssPx(-CARD_WIDTH/2) ,
+        top: numberToCssPx(-CARD_HEIGHT/2)
       }}
     >
       {
         cards.map((card, index) => {
-          const offsetIndex = Math.floor(index * OFFSETS / length);
+          const offsetIndex = Math.floor(index * OFFSETS / LENGTH);
           const offsetCss = numberToCssPx(offsetIndex * OFFSET_PX);
 
           return (
@@ -90,7 +136,7 @@ export const Deck = ({ size, cards }) => {
                 top: offsetCss
               }}
             >
-              <CardImage card={null} />
+              <CardImage card={card} />
             </div>
           )})
         }
