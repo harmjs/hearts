@@ -1,12 +1,7 @@
-const IPlayer = {
-  name: null,
-}
-
-const Player = function(value, hand) {
+const Player = function(value) {
   this.value = value;
-  this.hand = hand;
-  this.discard = null;
-  this.name = null;
+  this.hand = [];
+  this.discard = [];
 }
 
 export default Player;

@@ -34,7 +34,7 @@ const Card = function(rank, suit) {
   this.value = rank.value + suit.value * 13;
 };
 
-Card.createDeck = function() {
+Card.createFullDeck = function() {
   return Object.values(Suit)
     .map((suit) => Object.values(Rank)
       .map((rank) => new Card(rank, suit)))
@@ -50,7 +50,7 @@ Card.prototype = {
     return this.rank.name + " of " + this.suit.name;
   },
   _scoreMap: function() {
-    return new Map(Card.createDeck()
+    return new Map(Card.createFullDeck()
       .map((card) => {
         const score = (() => {
           if(card.suit === Card.Suit.HEARTS) {

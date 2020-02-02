@@ -9,7 +9,7 @@ export function useObject(mutable) {
 
   const updateObject = function() {
     setState(new ImmutableWrapper(state.mutable));
-  }
-  
+  };
+
   return [state.mutable, updateObject];
 }

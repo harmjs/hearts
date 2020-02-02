@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import Card from './model/Card';
 import cards_spritesheet from '../public/cards_spritesheet.png';
 import { numberToCssPx } from './lib/helpers';
@@ -8,7 +8,7 @@ const CARD_HEIGHT = 123;
 
 // maps card value to correct css value on card_sheet
 const cardPositionCssMap = (() => {
-  return new Map(Card.createDeck()
+  return new Map(Card.createFullDeck()
     .map((card) => {
       let xRank = card.rank.value;
       let ySuit = card.suit.value;
@@ -60,16 +60,70 @@ const CardImageBack = () => (
   />
 );
 
-const HAND_CARD_OFFSET = 15;
-const BORDER_OFFSET = 50;
 
-export const PlayerHand = ({ size, player }) => {
+export const Deck = ({ deck, cardAnimatorBuffer }) => {
+  return (
+    <div
+      className="cards"
+      style={{
+        left: numberToCssPx(-CARD_WIDTH/2) ,
+        top: numberToCssPx(-CARD_HEIGHT/2)
+      }}
+    >
+      { deck.map((card, index) => (
+          <DeckCard
+            cardAnimatorBuffer={cardAnimatorBuffer}
+            key={index}
+            card={card}
+            index={index}
+          />
+      ))}
+    </div>
+  )
+}
+
+const D_CARD_OFFSETS = 8;
+const D_CARD_OFFSET_PX = 2;
+
+const DeckCard = ({ card, index, cardAnimatorBuffer }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    cardAnimatorBuffer.set(
+      card.value,
+      ref.current.getBoundingClientRect()
+    )
+  }, [])
+
+  const offsetIndex = Math.floor(index * D_CARD_OFFSETS / 52);
+  const offsetCss = numberToCssPx(offsetIndex * D_CARD_OFFSET_PX);
+  
+  return (
+    <div
+      ref={ref}
+      className="card"
+      key={index}
+      style = {{
+        zIndex: index,
+        left: offsetCss,
+        top: offsetCss
+      }}
+    >
+    <CardImage card={null} />
+  </div>
+  )
+}
+
+const PH_BORDER_OFFSET_PX = 50;
+const PH_CARD_OFFSET_PX = 15;
+
+export const PlayerHand = ({ size, player, cardAnimatorBuffer }) => {
   if(!player.hand) return null;
 
   const cards = player.hand;
 
   const handWidth = 
-    HAND_CARD_OFFSET * (cards.length - 1) + CARD_WIDTH;
+    PH_CARD_OFFSET_PX * (13 - 1) + CARD_WIDTH;
   const transformCss = "rotate(" + player.value * 90 + "deg)";
 
   return (
@@ -82,68 +136,67 @@ export const PlayerHand = ({ size, player }) => {
       <div
         style={{
           position: "relative",
-          top: numberToCssPx(size/2 - CARD_HEIGHT - BORDER_OFFSET),
+          top: numberToCssPx(size/2 - CARD_HEIGHT - PH_BORDER_OFFSET_PX),
           left: - handWidth/2
         }}
       >
         {
-          cards.map((card, index) => {
-            return (
-              <div
-                className="card"
-                key={index}
-                style = {{
-                  zIndex: index,
-                  left: numberToCssPx(HAND_CARD_OFFSET * index)
-                }}
-              >
-                <CardImage card={card} />
-              </div>
-            )})
-          }
+          cards.map((card, index) => (
+            <PlayerHandCard 
+              transformCss={transformCss}
+              cardAnimatorBuffer={cardAnimatorBuffer}
+              card={card}
+              index={index}
+              key={index}
+            />
+        ))}
       </div>
     </div>
   )
 }
 
-export const Deck = ({ size, cards }) => {
-  if(!cards) return null;
+const PlayerHandCard = ({ card, index, cardAnimatorBuffer, transformCss }) => {
+  const ref = useRef(null);
+  const [animating, setAnimating] = useState(false);
 
-  const LENGTH = 52;
-  const OFFSETS = 1;
-  const OFFSET_PX = 2;
+  useEffect(() => {
+    const first = cardAnimatorBuffer.get(card.value);
+    const last = ref.current.getBoundingClientRect();
 
+    const deltaX = first.left - last.left;
+    const deltaY = first.top - last.top;
+
+    ref.current.animate([{
+      transformOrigin: 'top left',
+      transform: `
+        translate(${deltaX}px, ${deltaY}px)
+        ${transformCss}
+      `
+    }, {
+      transformOrigin: 'top left',
+      transform: 'none'
+    }],
+
+    {
+      duration: 300,
+      easing: 'ease-in-out',
+      fill: 'both'
+    }
+    )
+  }, [])
+
+
+  // transform 
   return (
     <div
-      className="cards"
-      style={{
-        left: numberToCssPx(-CARD_WIDTH/2) ,
-        top: numberToCssPx(-CARD_HEIGHT/2)
+      ref={ref}
+      className="card"
+      style = {{
+        zIndex: index,
+        left: numberToCssPx(PH_CARD_OFFSET_PX * index)
       }}
     >
-      {
-        cards.map((card, index) => {
-          const offsetIndex = Math.floor(index * OFFSETS / LENGTH);
-          const offsetCss = numberToCssPx(offsetIndex * OFFSET_PX);
-
-          return (
-            <div
-              className="card"
-              key={index}
-              style = {{
-                zIndex: index,
-                left: offsetCss,
-                top: offsetCss
-              }}
-            >
-              <CardImage card={card} />
-            </div>
-          )})
-        }
+      <CardImage card={card} />
     </div>
   )
-}
-
-const Hand = function() {
-  
 }
