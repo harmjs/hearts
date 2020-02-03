@@ -2,9 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import Card from './model/Card';
 import cards_spritesheet from '../public/cards_spritesheet.png';
 import { numberToCssPx } from './lib/helpers';
+import Vect2D from './lib/Vect2D';
 
-const CARD_WIDTH = 79;
-const CARD_HEIGHT = 123;
+
+const CARD_SIZE = new Vect2D(79, 123);
 
 // maps card value to correct css value on card_sheet
 const cardPositionCssMap = (() => {
@@ -26,8 +27,8 @@ const cardPositionCssMap = (() => {
       }
 
       const objectPositionCss = 
-        numberToCssPx(xRank * CARD_WIDTH * -1) + " " + 
-        numberToCssPx(ySuit * CARD_HEIGHT * -1);
+        numberToCssPx(xRank * CARD_SIZE.x * -1) + " " + 
+        numberToCssPx(ySuit * CARD_SIZE.y * -1);
       return [card.value, objectPositionCss];
     })
   );
@@ -35,168 +36,136 @@ const cardPositionCssMap = (() => {
 
 const CardImage = ({ card }) => {
   if(card) {
-    return <CardImageFront card={card} />
+    const objectPosition = cardPositionCssMap.get(card.value);
+
+    return (
+      <img
+        className="card__image"
+        style={{ objectPosition }}
+        src={cards_spritesheet}
+      />
+    )
   } else {
-    return <CardImageBack />
+    <img
+      className="card__image card__image--back"
+      src={cards_spritesheet}
+    />
   }
 }
 
-const CardImageFront = ({ card }) => { 
-  const objectPosition = cardPositionCssMap.get(card.value);
+const D_CARD_OFFSETS = 8;
+const D_CARD_OFFSET_SIZE = new Vect2D(2, 2);
+
+export const Deck = ({ deck, screenSize, cardBuffer }) => {
+  const origin = screenSize.divide(2).subtract(CARD_SIZE.divide(2));
 
   return (
-    <img
-      className="card__image"
-      style={{ objectPosition }}
-      src={cards_spritesheet}
-    />
-  )
-}
+    <>
+      { deck.map((card, index) => {
+        const offsetIndex = Math.floor(index * D_CARD_OFFSETS / 52);
+        const offset = D_CARD_OFFSET_SIZE.multiply(offsetIndex);
+        const position = origin.add(offset);
 
-const CardImageBack = () => (
-  <img
-    className="card__image card__image--back"
-    src={cards_spritesheet}
-  />
-);
-
-
-export const Deck = ({ deck, cardAnimatorBuffer }) => {
-  return (
-    <div
-      className="cards"
-      style={{
-        left: numberToCssPx(-CARD_WIDTH/2) ,
-        top: numberToCssPx(-CARD_HEIGHT/2)
-      }}
-    >
-      { deck.map((card, index) => (
-          <DeckCard
-            cardAnimatorBuffer={cardAnimatorBuffer}
+        return (
+          <CardComponent
             key={index}
             card={card}
-            index={index}
+            position={position}
+            rotationIndex={0}
+            cardBuffer={cardBuffer}
           />
-      ))}
-    </div>
-  )
+      )})}
+    </>
+  );
 }
 
-const D_CARD_OFFSETS = 8;
-const D_CARD_OFFSET_PX = 2;
+const BORDER_FACTOR = 9/10;
+const PH_CARD_OFFSET_X = 15;
 
-const DeckCard = ({ card, index, cardAnimatorBuffer }) => {
+export const PlayerHand = ({ player, screenSize, cardBuffer }) => {
+  if (!player.hand) return null;
+
+  const center = screenSize.divide(2);
+  const totalHandWidth = PH_CARD_OFFSET_X * 12 + CARD_SIZE.x;
+
+  const translate = new Vect2D(
+    -totalHandWidth/2,
+    center.y*BORDER_FACTOR - CARD_SIZE.y
+  );
+  
+  const rotation = player.value * Math.PI/2;
+
+  return (
+    <>
+      { player.hand.map((card, index) => {
+          const origin = new Vect2D(PH_CARD_OFFSET_X * index, 0);
+
+          const position = origin
+            .add(translate)
+            .rotate(rotation)
+            .add(center);
+
+        return (
+          <CardComponent
+            cardBuffer={cardBuffer}
+            key={index}
+            card={card}
+            position={position}
+            rotationIndex={player.value}
+          />
+      )})}
+    </>
+  );
+};
+
+
+const CardComponent = ({ 
+  card, index, position, rotationIndex, cardBuffer 
+}) => {
+
   const ref = useRef(null);
 
   useEffect(() => {
-    cardAnimatorBuffer.set(
-      card.value,
-      ref.current.getBoundingClientRect()
-    )
+    if(!cardBuffer.has(card.value)) {
+      cardBuffer.set(card.value, { position, rotationIndex });
+
+    } else {
+      const prevEntry = cardBuffer.get(card.value);
+      const deltaPos = prevEntry.position.subtract(position);
+
+      ref.current.animate([{
+        transformOrigin: 'top left',
+        transform: `
+          translate(${numberToCssPx(deltaPos.x)}, ${numberToCssPx(deltaPos.y)})
+        `
+      }, {
+        transformOrigin: 'top left',
+        transform: `
+          rotate(${rotationIndex * 90}deg)
+        `,
+      }], {
+        duration: 300,
+        easing: 'ease-in-out',
+      })
+    }
   }, [])
 
-  const offsetIndex = Math.floor(index * D_CARD_OFFSETS / 52);
-  const offsetCss = numberToCssPx(offsetIndex * D_CARD_OFFSET_PX);
-  
-  return (
+  // rotate(${prevEntry.rotationIndex * 90}deg)
+
+  return(
     <div
       ref={ref}
-      className="card"
-      key={index}
-      style = {{
-        zIndex: index,
-        left: offsetCss,
-        top: offsetCss
-      }}
-    >
-    <CardImage card={null} />
-  </div>
-  )
-}
-
-const PH_BORDER_OFFSET_PX = 50;
-const PH_CARD_OFFSET_PX = 15;
-
-export const PlayerHand = ({ size, player, cardAnimatorBuffer }) => {
-  if(!player.hand) return null;
-
-  const cards = player.hand;
-
-  const handWidth = 
-    PH_CARD_OFFSET_PX * (13 - 1) + CARD_WIDTH;
-  const transformCss = "rotate(" + player.value * 90 + "deg)";
-
-  return (
-    <div 
       style={{
         position: "absolute",
-        transform: transformCss
+        transform: "rotate(" + rotationIndex * 90 + "deg)",
+        zIndex: numberToCssPx(52 - index),
+        left: numberToCssPx(position.x),
+        top: numberToCssPx(position.y)
       }}
     >
-      <div
-        style={{
-          position: "relative",
-          top: numberToCssPx(size/2 - CARD_HEIGHT - PH_BORDER_OFFSET_PX),
-          left: - handWidth/2
-        }}
-      >
-        {
-          cards.map((card, index) => (
-            <PlayerHandCard 
-              transformCss={transformCss}
-              cardAnimatorBuffer={cardAnimatorBuffer}
-              card={card}
-              index={index}
-              key={index}
-            />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-const PlayerHandCard = ({ card, index, cardAnimatorBuffer, transformCss }) => {
-  const ref = useRef(null);
-  const [animating, setAnimating] = useState(false);
-
-  useEffect(() => {
-    const first = cardAnimatorBuffer.get(card.value);
-    const last = ref.current.getBoundingClientRect();
-
-    const deltaX = first.left - last.left;
-    const deltaY = first.top - last.top;
-
-    ref.current.animate([{
-      transformOrigin: 'top left',
-      transform: `
-        translate(${deltaX}px, ${deltaY}px)
-        ${transformCss}
-      `
-    }, {
-      transformOrigin: 'top left',
-      transform: 'none'
-    }],
-
-    {
-      duration: 300,
-      easing: 'ease-in-out',
-      fill: 'both'
-    }
-    )
-  }, [])
-
-
-  // transform 
-  return (
-    <div
-      ref={ref}
-      className="card"
-      style = {{
-        zIndex: index,
-        left: numberToCssPx(PH_CARD_OFFSET_PX * index)
-      }}
-    >
-      <CardImage card={card} />
+      <CardImage 
+        card={card}
+      />
     </div>
   )
 }

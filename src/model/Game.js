@@ -14,7 +14,6 @@ Game.Controller = function(update) {
 }
 
 Game.Controller.prototype = {
-  //change this to a callback (will be faster faster)
   scheduleUpdate: function(game, override) {
     if(this.shouldUpdate || override) {
       game.state.onUpdate(game);

@@ -23,6 +23,7 @@ img {
 }
 
 .playarea {
+    position: relative;
     background-color: green;
     margin: auto;
 }
@@ -44,10 +45,11 @@ img {
 }
 
 .card {
-    position: absolute;
+    position: relative;
 }
 
 .card__image {
+    position: absolute;
     object-fit: none;
     width: 79px;
     height: 123px;
