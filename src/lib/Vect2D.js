@@ -22,6 +22,9 @@ Vect2D.prototype = {
       this.x * Math.cos(angle) - this.y * Math.sin(angle),
       this.x * Math.sin(angle) + this.y * Math.cos(angle)
     )
+  },
+  equals: function(vect2D) {
+    return this.x === vect2D.x && this.y === vect2D.y;
   }
 }
 

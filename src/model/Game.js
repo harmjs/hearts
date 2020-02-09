@@ -66,8 +66,11 @@ Game.State.Start = function(game) {
 Game.State.Start.prototype = Object.assign(
   Object.create(IState), {
     constructor: Game.State.Start,
-    _SERVE_DELAY_MS: 100,
+    _SERVE_DELAY_MS: 25,
     onStart: function(game) {
+
+
+
       this.players = [
         new Player(0), new Player(1),
         new Player(2), new Player(3)
@@ -79,6 +82,7 @@ Game.State.Start.prototype = Object.assign(
         () => this._serveCard(game), 
         this._SERVE_DELAY_MS
       );
+
     },
     _serveCard: function(game) {
       if(this.deck.length) {
@@ -89,12 +93,34 @@ Game.State.Start.prototype = Object.assign(
         game.controller.scheduleUpdate(game, true);
       } else {
         clearInterval(this.serveIntervalId);
+        this._onServeComplete(game);
       }
+    },
+    _onServeComplete: function(game) {
+      this.players.forEach((player) => {
+        this.players.hand = player.hand.sort((a, b) => a.value - b.value)
+      })
+      game.controller.scheduleUpdate(game, true);
     }
   }
 );
 
 /*
+
+this.players[0].hand = [
+  new Card(Card.Rank.TWO, Card.Suit.HEARTS),
+  new Card(Card.Rank.THREE, Card.Suit.HEARTS),
+];
+
+this.serveIntervalId = setTimeout(() => {
+  this.players[0].hand = [
+    new Card(Card.Rank.THREE, Card.Suit.HEARTS),
+    new Card(Card.Rank.TWO, Card.Suit.HEARTS),
+  ];
+    game.controller.scheduleUpdate(game, true);
+  }, 1000
+)
+
 const Round = function(state, number) {
   this.state = state;
   this.number = number;

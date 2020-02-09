@@ -7,6 +7,28 @@ import Vect2D from './lib/Vect2D';
 
 const CARD_SIZE = new Vect2D(79, 123);
 
+const Transform = function(position, rotationIndex) {
+  this.position = position;
+  this.rotation = rotationIndex * 90;
+}
+
+Transform.prototype.equals = function(transform) {
+  this.position.equals(cardTransform.position)
+  && this.rotation === cardTransform.rotation
+}
+
+const CardTransform = function(card, transform) {
+  this.card = card;
+  this.transform = transform;
+}
+
+CardTransform.prototype.equals = function(cardTransform) {
+  return (
+    this.position.equals(cardTransform.position)
+    && this.rotation === cardTransform.rotation
+  );
+}
+
 // maps card value to correct css value on card_sheet
 const cardPositionCssMap = (() => {
   return new Map(Card.createFullDeck()
@@ -66,12 +88,12 @@ export const Deck = ({ deck, screenSize, cardBuffer }) => {
         const offset = D_CARD_OFFSET_SIZE.multiply(offsetIndex);
         const position = origin.add(offset);
 
+        const transform = new Transform(position, 0);
+
         return (
           <CardComponent
             key={index}
-            card={card}
-            position={position}
-            rotationIndex={0}
+            cardTransform={new CardTransform(card, transform)}
             cardBuffer={cardBuffer}
           />
       )})}
@@ -83,10 +105,11 @@ const BORDER_FACTOR = 9/10;
 const PH_CARD_OFFSET_X = 15;
 
 export const PlayerHand = ({ player, screenSize, cardBuffer }) => {
+
   if (!player.hand) return null;
 
   const center = screenSize.divide(2);
-  const totalHandWidth = PH_CARD_OFFSET_X * 12 + CARD_SIZE.x;
+  const totalHandWidth = PH_CARD_OFFSET_X * (player.hand.length - 1) + CARD_SIZE.x;
 
   const translate = new Vect2D(
     -totalHandWidth/2,
@@ -105,20 +128,103 @@ export const PlayerHand = ({ player, screenSize, cardBuffer }) => {
             .rotate(rotation)
             .add(center);
 
+        const transform = new Transform(position, player.value);
+
         return (
           <CardComponent
             cardBuffer={cardBuffer}
             key={index}
-            card={card}
-            position={position}
-            rotationIndex={player.value}
+            index={index}
+            cardTransform={new CardTransform(card, transform)}
           />
       )})}
     </>
   );
 };
 
+const animateCardTransfrom = function(elem, transform, prevTransform) {
+  const deltaTranslate = prevTransform.position.subtract(transform.position);
 
+  elem.animate([{
+    transformOrigin: 'top left',
+    transform: `
+      translate(
+        ${deltaTranslate.x}px, 
+        ${deltaTranslate.y}px
+      )
+      rotate(
+        ${prevTransform.rotation}deg
+      )
+      `
+  }, {
+    transformOrigin: 'top left',
+    transform: `
+      rotate(
+        ${transform.rotation}deg
+      )
+    `
+  }],{
+    duration: 300,
+    easing: 'ease-in-out',
+    fill: 'both'
+  });
+}
+
+const CardComponent = ({ cardTransform, index, cardBuffer })=> {
+
+  const ref = useRef();
+
+  const [activeCardTransform, setActiveTransform] = useState(
+    (() => {
+      if(cardBuffer.has(cardTransform.card.value)) {
+        return cardBuffer.get(cardTransform.card.value);
+      } else {
+        cardBuffer.set(cardTransform.card.value, cardTransform);
+        return cardTransform;
+      }
+    })()
+  );
+
+  useEffect(() => {
+
+    animateCardTransfrom(
+      ref.current,
+      cardTransform.transform,
+      cardBuffer.get(cardTransform.card.value).transform
+    );
+
+    cardBuffer.set(cardTransform.card.value, cardTransform);
+    setActiveTransform(cardTransform);
+
+  }, [cardTransform])
+
+  const { card, transform } = activeCardTransform;
+
+  return (
+    <div
+      ref={ref}
+      onAnimationEnd={() => console.log('animating')}
+      style={{
+        position: "absolute",
+        transform: "rotate(" + transform.rotation + "deg)",
+        zIndex: numberToCssPx(52 - index),
+        left: numberToCssPx(transform.position.x),
+        top: numberToCssPx(transform.position.y),
+      }}
+    >
+      <CardImage 
+        card={card}
+      />
+    </div>
+  );
+}
+
+  /*
+  return (
+
+  )
+  */
+/*
 const CardComponent = ({ 
   card, index, position, rotationIndex, cardBuffer 
 }) => {
@@ -133,20 +239,7 @@ const CardComponent = ({
       const prevEntry = cardBuffer.get(card.value);
       const deltaPos = prevEntry.position.subtract(position);
 
-      ref.current.animate([{
-        transformOrigin: 'top left',
-        transform: `
-          translate(${numberToCssPx(deltaPos.x)}, ${numberToCssPx(deltaPos.y)})
-        `
-      }, {
-        transformOrigin: 'top left',
-        transform: `
-          rotate(${rotationIndex * 90}deg)
-        `,
-      }], {
-        duration: 300,
-        easing: 'ease-in-out',
-      })
+      
     }
   }, [])
 
@@ -169,3 +262,5 @@ const CardComponent = ({
     </div>
   )
 }
+
+*/
