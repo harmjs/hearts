@@ -46,7 +46,7 @@ Card.Suit = Suit;
 
 Card.prototype = {
   constructor: Card,
-  name: function() {
+  get name() {
     return this.rank.name + " of " + this.suit.name;
   },
   _scoreMap: function() {

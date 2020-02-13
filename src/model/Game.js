@@ -2,6 +2,7 @@ import Card from './Card';
 import Player from './Player';
 
 import { random } from '../lib/helpers';
+import { GAME_DELAY_FACTOR } from '../constants';
 
 const Game = function() {
   this.controller = null;
@@ -66,11 +67,7 @@ Game.State.Start = function(game) {
 Game.State.Start.prototype = Object.assign(
   Object.create(IState), {
     constructor: Game.State.Start,
-    _SERVE_DELAY_MS: 25,
     onStart: function(game) {
-
-
-
       this.players = [
         new Player(0), new Player(1),
         new Player(2), new Player(3)
@@ -80,9 +77,8 @@ Game.State.Start.prototype = Object.assign(
 
       this.serveIntervalId = setInterval(
         () => this._serveCard(game), 
-        this._SERVE_DELAY_MS
+        GAME_DELAY_FACTOR * 25
       );
-
     },
     _serveCard: function(game) {
       if(this.deck.length) {
@@ -104,46 +100,5 @@ Game.State.Start.prototype = Object.assign(
     }
   }
 );
-
-/*
-
-this.players[0].hand = [
-  new Card(Card.Rank.TWO, Card.Suit.HEARTS),
-  new Card(Card.Rank.THREE, Card.Suit.HEARTS),
-];
-
-this.serveIntervalId = setTimeout(() => {
-  this.players[0].hand = [
-    new Card(Card.Rank.THREE, Card.Suit.HEARTS),
-    new Card(Card.Rank.TWO, Card.Suit.HEARTS),
-  ];
-    game.controller.scheduleUpdate(game, true);
-  }, 1000
-)
-
-const Round = function(state, number) {
-  this.state = state;
-  this.number = number;
-  this.type = Round.types[number % Round.types.length];
-  this.set = null;
-}
-
-Round.Type = function(isPass, direction) {
-  this.isPass = isPass;
-  this.direction = direction;
-}
-
-Round.Type.LIST = [
-  new Round.Type(true, 1),
-  new Round.Type(true, -1),
-  new Round.Type(false, null)
-];
-
-const Trick = function(start) {
-  this.state = null;
-}
-
-*/
-
 
 export default Game;

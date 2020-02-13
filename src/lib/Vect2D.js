@@ -25,6 +25,9 @@ Vect2D.prototype = {
   },
   equals: function(vect2D) {
     return this.x === vect2D.x && this.y === vect2D.y;
+  },
+  magnitude: function() {
+    return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
   }
 }
 
